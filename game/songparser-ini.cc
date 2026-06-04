@@ -28,10 +28,10 @@ void SongParser::iniParseHeader() {
 	while (getline(line)) {
 		if (line.empty()) continue;
 		if (trim(line)[0] == '[') { // Section header.
-			if (line.find("[song]") != std::string::npos) continue;
+			if (line.tolower().find("[song]") != std::string::npos) continue;
 			break; // Keys should be under the correct section.
 		}
-		if ((line[0] == ';' || line[0] == '#') && line[1] == ' ') continue; // Comment. 
+		if ((line[0] == ';' || line[0] == '#') && line[1] == ' ') continue; // Comment.
 		std::string key;
 		std::string value;
 		std::smatch match;
