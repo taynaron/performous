@@ -43,6 +43,7 @@ public:
 private:
 	void manageSharedKey(input::NavEvent const& event); ///< same behaviour for jukebox and normal mode
 	void drawInstruments(Dimensions dim) const;
+	void drawInfoPanel(Window& window, std::string const& infoText);
 	void drawMultimedia();
 	void update();
 	void drawMenu();
@@ -51,11 +52,13 @@ private:
 	void createPlaylistMenu();
 	Texture* loadTextureFromMap(fs::path path);
 	std::string getHighScoreText() const;
+	std::string getInfoPanelText(Song const& song) const;
 
 	Audio& m_audio;
 	Songs& m_songs;
 	Database& m_database;
 	std::unique_ptr<Texture> m_songbg, m_songbg_ground, m_songbg_default;
+	std::unique_ptr<Texture> m_infopanelBg;
 	std::unique_ptr<Video> m_video;
 	std::unique_ptr<ThemeSongs> theme;
 	Song::MusicFiles m_playing;

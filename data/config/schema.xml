@@ -104,6 +104,11 @@ to save the current settings to XML.
 		<short>High-score timeout</short>
 		<long>How long the high-scores screen will wait for input before going to the next song.</long>
 	</entry>
+	<entry name="game/songinfo_delay" type="uint" value="2">
+		<limits min="0" max="10" step="1" />
+		<short>Song info panel delay</short>
+		<long>How long to wait, in seconds, before showing the song info panel while browsing.</long>
+	</entry>
 	<entry name="game/language" type="uint" value="1337">
 		<limits>
 		<enum/>

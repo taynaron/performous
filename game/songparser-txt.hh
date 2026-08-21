@@ -21,6 +21,7 @@ private:
 	bool txtParseField(Song&, std::string const& line);
 	bool txtParseNote(Song&, std::string line);
 	void txtResetState(Song&);
+	void txtInitBPM(Song&);
 	bool getline(std::string& line);
 
 	std::stringstream m_ss;

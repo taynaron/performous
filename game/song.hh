@@ -96,6 +96,16 @@ public:
 	std::string providedBy; ///< source of the mapped file.
 	std::string comment; ///< comment of the mapped file.
 	std::string version; ///< version of the mapped file.
+	std::string album; ///< album name
+	std::string loadingPhrase; ///< text shown during difficulty selection (FoF/Clone Hero)
+	std::string icon; ///< charter/setlist icon slug (FoF/Clone Hero); displayed via a name lookup, not loaded as a file
+	int albumTrack = 0; ///< track position within the album (FoF/Clone Hero); 0 = unset
+	int diffGuitar = -1; ///< chart-author-assigned guitar difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
+	int diffBass = -1; ///< chart-author-assigned bass difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
+	int diffDrums = -1; ///< chart-author-assigned drums difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
+	int diffKeys = -1; ///< chart-author-assigned keys difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
+	int diffVocals = -1; ///< chart-author-assigned vocals difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
+	int diffRhythm = -1; ///< chart-author-assigned rhythm guitar difficulty rating (FoF/Clone Hero), 0-6 or -1 = unrated
 	using MusicFiles = std::map<std::string, fs::path>;
 	MusicFiles music; ///< music files (background, guitar, rhythm/bass, drums, vocals)
 	fs::path cover; ///< cd cover

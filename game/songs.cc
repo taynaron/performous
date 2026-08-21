@@ -181,6 +181,36 @@ void Songs::CacheSonglist() {
 		if(!song->genre.empty()) {
 			songObject["genre"] = song->genre;
 		}
+		if(!song->album.empty()) {
+			songObject["album"] = song->album;
+		}
+		if (song->albumTrack != 0) {
+			songObject["albumTrack"] = song->albumTrack;
+		}
+		if(!song->loadingPhrase.empty()) {
+			songObject["loadingPhrase"] = song->loadingPhrase;
+		}
+		if(!song->icon.empty()) {
+			songObject["icon"] = song->icon;
+		}
+		if (song->diffGuitar != -1) {
+			songObject["diffGuitar"] = song->diffGuitar;
+		}
+		if (song->diffBass != -1) {
+			songObject["diffBass"] = song->diffBass;
+		}
+		if (song->diffDrums != -1) {
+			songObject["diffDrums"] = song->diffDrums;
+		}
+		if (song->diffKeys != -1) {
+			songObject["diffKeys"] = song->diffKeys;
+		}
+		if (song->diffVocals != -1) {
+			songObject["diffVocals"] = song->diffVocals;
+		}
+		if (song->diffRhythm != -1) {
+			songObject["diffRhythm"] = song->diffRhythm;
+		}
 		if(!song->cover.string().empty()) {
 			songObject["cover"] = song->cover.string();
 		}

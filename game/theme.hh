@@ -28,6 +28,8 @@ public:
 	SvgTxtTheme has_hiscore;
 	/// hiscores display
 	SvgTxtTheme hiscores;
+	/// extra song info panel (album, year, difficulties, etc.)
+	SvgTxtTheme infopanel;
 };
 
 /// theme for practice screen
