@@ -53,6 +53,18 @@ namespace SongParserUtil {
 		if (!is_yes && !is_no) { throw std::runtime_error ("Invalid boolean value: " + str); }
 		var = is_yes;
 	}
+	void assignYear(int& var, std::string const& str) {
+		// Some song.ini/txt files put a full release date here instead of a bare year, e.g.
+		// "1966 (August 5)" or "October 16, 1965" -- pull out any standalone 4-digit number,
+		// wherever it appears in the string, rather than requiring the whole field to be just a year.
+		static const std::regex fourDigits(R"(\b(\d{4})\b)");
+		std::smatch match;
+		if (std::regex_search(str, match, fourDigits)) {
+			var = std::stoi(match[1].str());
+			return;
+		}
+		throw std::runtime_error("\"" + str + "\" does not contain a 4-digit year");
+	}
 	void eraseLast (std::string& s, char ch) {
 		if (!s.empty() && (*s.rbegin() == ch)) {s.erase (s.size() - 1); }
 	}

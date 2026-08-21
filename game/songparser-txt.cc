@@ -63,6 +63,7 @@ void TxtSongParser::txtParse(Song& song) {
 	song.insertVocalTrack(TrackName::VOCAL_LEAD, VocalTrack(TrackName::VOCAL_LEAD));
 	song.insertVocalTrack(DUET_P2, VocalTrack(DUET_P2));
 	while (getline(line) && txtParseField(song, line)) {} // Parse the header again
+	txtInitBPM(song);
 	txtResetState(song);
 	while (txtParseNote(song, line) && getline(line)) {} // Parse notes
 	// Workaround for the terminating : 1 0 0 line, written by some converters
@@ -148,7 +149,7 @@ bool TxtSongParser::txtParseField(Song& song, std::string const& line) {
 	else if (key == "ARTIST") song.artist = value.substr(value.find_first_not_of(" "));
 	else if (key == "EDITION") song.edition = value.substr(value.find_first_not_of(" "));
 	else if (key == "GENRE") song.genre = value.substr(value.find_first_not_of(" "));
-	else if (key == "CREATOR") song.creator = value.substr(value.find_first_not_of(" "));
+	else if (key == "CREATOR" || key == "AUTHOR") song.creator = value.substr(value.find_first_not_of(" "));
 	else if (key == "COVER") song.cover = absolute(value, song.path);
 	else if (key == "MP3" || key == "AUDIO") song.music[TrackName::BGMUSIC] = absolute(value, song.path);
 	else if (key == "INSTRUMENTAL") song.music[TrackName::INSTRUMENTAL] = absolute(value, song.path);
@@ -157,7 +158,7 @@ bool TxtSongParser::txtParseField(Song& song, std::string const& line) {
 	else if (key == "BACKGROUND") song.background = absolute(value, song.path);
 	else if (key == "START") assign(song.start, value);
 	else if (key == "END") assign(song.end, value);
-	else if (key == "YEAR") assign(song.year, value);
+	else if (key == "YEAR") assignYear(song.year, value);
 	else if (key == "VIDEOGAP") assign(song.videoGap, value);
 	else if (key == "PREVIEWSTART") assign(song.preview_start, value);
 	else if (key == "LANGUAGE") song.language = value.substr(value.find_first_not_of(" "));
@@ -290,7 +291,11 @@ bool TxtSongParser::txtParseNote(Song& song, std::string line) {
 }
 
 void TxtSongParser::txtResetState(Song& song) {
+	(void)song;
 	m_txt = TXTState();
+}
+
+void TxtSongParser::txtInitBPM(Song& song) {
 	song.m_bpms.clear();
-	if (m_bpm != 0.0f) { addBPM (song, 0, m_bpm, m_gap); }
+	if (m_bpm != 0.0f) { addBPM(song, 0, m_bpm, m_gap); }
 }

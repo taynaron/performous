@@ -117,7 +117,18 @@ void IniSongParser::iniParseHeader(Song& song) {
 		else if (key == "background") song.background = absolute(value, song.path);
 		else if (key == "video") song.video = absolute(value, song.path);
 		else if (key == "genre") song.genre = value;
-		else if (key == "frets") song.creator = value;
+		else if (key == "frets" || key == "charter") song.creator = value;
+		else if (key == "year") assignYear(song.year, value);
+		else if (key == "album") song.album = value;
+		else if (key == "track" || key == "album_track") assign(song.albumTrack, value);
+		else if (key == "loading_phrase") song.loadingPhrase = value;
+		else if (key == "icon") song.icon = value;
+		else if (key == "diff_guitar") assign(song.diffGuitar, value);
+		else if (key == "diff_bass") assign(song.diffBass, value);
+		else if (key == "diff_drums") assign(song.diffDrums, value);
+		else if (key == "diff_keys") assign(song.diffKeys, value);
+		else if (key == "diff_vocals") assign(song.diffVocals, value);
+		else if (key == "diff_rhythm") assign(song.diffRhythm, value);
 		else if (key == "delay") { assign(song.start, value); song.start/=1000.0; }
 		else if (key == "video_start_time") { assign(song.videoGap, value); song.videoGap/=1000.0; }
 		else if (key == "preview_start_time") { assign(song.preview_start, value); song.preview_start/=1000.0; }

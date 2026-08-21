@@ -24,6 +24,16 @@ Song::Song(nlohmann::json const& song)
 	providedBy = getJsonEntry<std::string>(song, "providedBy").value_or("");
 	comment = getJsonEntry<std::string>(song, "comment").value_or("");
 	genre = getJsonEntry<std::string>(song, "genre").value_or("");
+	album = getJsonEntry<std::string>(song, "album").value_or("");
+	albumTrack = getJsonEntry<int>(song, "albumTrack").value_or(0);
+	loadingPhrase = getJsonEntry<std::string>(song, "loadingPhrase").value_or("");
+	icon = getJsonEntry<std::string>(song, "icon").value_or("");
+	diffGuitar = getJsonEntry<int>(song, "diffGuitar").value_or(-1);
+	diffBass = getJsonEntry<int>(song, "diffBass").value_or(-1);
+	diffDrums = getJsonEntry<int>(song, "diffDrums").value_or(-1);
+	diffKeys = getJsonEntry<int>(song, "diffKeys").value_or(-1);
+	diffVocals = getJsonEntry<int>(song, "diffVocals").value_or(-1);
+	diffRhythm = getJsonEntry<int>(song, "diffRhythm").value_or(-1);
 	cover = getJsonEntry<std::string>(song, "cover").value_or("");
 	background = getJsonEntry<std::string>(song, "background").value_or("");
 	video = getJsonEntry<std::string>(song, "videoFile").value_or("");
@@ -217,8 +227,10 @@ std::string Song::strFull() const {
 		"{}\n"
 		"{}\n"
 		"{}\n"
+		"{}\n"
+		"{}\n"
 		"{}",
-		title, artist, genre, edition, path
+		title, artist, genre, edition, album, year > 0 ? std::to_string(year) : "", path
 	);
 }
 

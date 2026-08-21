@@ -19,6 +19,9 @@ namespace SongParserUtil {
 	void assign(float& var, std::string str);
 	/// Parse a boolean from string and assign it to a variable
 	void assign(bool& var, std::string const& str);
+	/// Parse a year from a string that may be a bare year or a full date (e.g. "October 16, 1965",
+	/// "1966 (August 5)") by extracting the first standalone 4-digit number found anywhere in it.
+	void assignYear(int& var, std::string const& str);
 	/// Erase last character if it matches
 	void eraseLast(std::string& s, char ch = ' ');
 

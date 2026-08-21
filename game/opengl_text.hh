@@ -158,6 +158,11 @@ public:
 	float h() const { return m_texture_height; }
 	/// set align
 	void setAlign(Align align) { m_align = align; }
+	/// the parsed text style (font/color/stroke), for callers that need to measure text the same
+	/// way draw() eventually will (e.g. to lay out a container around it ahead of time)
+	TextStyle const& style() const { return m_textstyle; }
+	/// the text quality factor passed to TextRenderer, paired with style() for measuring
+	float factor() const { return m_factor; }
 
 private:
 	std::vector<std::unique_ptr<OpenGLText>> m_opengl_text;

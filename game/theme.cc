@@ -13,7 +13,8 @@ ThemeSongs::ThemeSongs():
 	song(findFile("songs_song.svg"), config["graphic/text_lod"].f()),
 	order(findFile("songs_order.svg"), config["graphic/text_lod"].f()),
 	has_hiscore(findFile("songs_has_hiscore.svg"), config["graphic/text_lod"].f()),
-	hiscores(findFile("songs_hiscores.svg"), config["graphic/text_lod"].f())
+	hiscores(findFile("songs_hiscores.svg"), config["graphic/text_lod"].f()),
+	infopanel(findFile("songs_infopanel.svg"), config["graphic/text_lod"].f())
 {
 	order.dimensions.screenBottom(-0.03f);
 }

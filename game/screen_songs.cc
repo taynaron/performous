@@ -12,16 +12,98 @@
 #include "theme.hh"
 #include "util.hh"
 #include "playlist.hh"
+#include "graphic/text_renderer.hh"
 #include "graphic/video_driver.hh"
 
 #include "aubio/aubio.h"
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
 
 static const double IDLE_TIMEOUT = 35.0; // seconds
+
+namespace {
+	// Maps a FoF/Clone Hero song.ini "icon" slug to a readable charter-set name; unknown slugs fall
+	// back to the raw slug. Extend as new slugs turn up.
+	std::string const& iconDisplayName(std::string const& slug) {
+		static const std::map<std::string, std::string> names = {
+			{"bh", "Band Hero"},
+			{"bhdlc", "Guitar Hero 5 DLC"},
+			{"gdrb", "Green Day Rock Band"},
+			{"gh5", "Guitar Hero 5"},
+			{"gh5dlc", "Guitar Hero 5 DLC"},
+			{"ghm", "Guitar Hero Metallica"},
+			{"ghmdlc", "Guitar Hero Metallica DLC"},
+			{"ghsh", "Guitar Hero Smash Hits"},
+			{"ghvh", "Guitar Hero Van Halen"},
+			{"ghwor", "Guitar Hero Warriors of Rock"},
+			{"ghwordlc", "Guitar Hero Warriors of Rock DLC"},
+			{"ghwt", "Guitar Hero World Tour"},
+			{"ghwtdlc", "Guitar Hero World Tour DLC"},
+			{"lrb", "Lego Rock Band"},
+			{"rb1", "Rock Band 1"},
+			{"rb1dlc", "Rock Band 1 DLC"},
+			{"rb2", "Rock Band 2"},
+			{"rb2dlc", "Rock Band 2 DLC"},
+			{"rb3", "Rock Band 3"},
+			{"rb3dlc", "Rock Band 3 DLC"},
+			{"rbb", "Rock Band Blitz"},
+			{"rbn", "Rock Band Network"},
+			{"tbrb", "The Beatles Rock Band"},
+			{"tbrbdlc", "The Beatles Rock Band DLC"},
+		};
+		auto it = names.find(slug);
+		return it != names.end() ? it->second : slug;
+	}
+
+	// Positioning follows songs_infopanel.svg's 800px-wide reference canvas (see SvgTxtTheme::SvgTxtTheme()).
+	constexpr float infopanelCanvasWidthPx = 800.0f;
+	constexpr float infopanelPaddingPx = 16.0f;  // inset on every side, box and text alike
+	constexpr float infopanelPaddingNdc = infopanelPaddingPx / infopanelCanvasWidthPx;
+	constexpr float infopanelWidth = 0.30f;   // same width as the "Done Loading!" dialog box
+	constexpr float infopanelRight = 0.50f;   // same right edge as the "Done Loading!" dialog box
+	constexpr float infopanelScreenTop = 0.14f;
+	constexpr float infopanelTextLeft = infopanelRight - infopanelWidth + infopanelPaddingNdc;
+
+	// Measures text the same way SvgTxtTheme::draw() sizes it -- including its overflow clamp, which
+	// shrinks width and height together -- so the box always matches what actually gets rendered.
+	float infopanelHeight(SvgTxtTheme const& svgTheme, std::string const& text) {
+		Size measured = TextRenderer().measure(text, svgTheme.style(), svgTheme.factor());
+		float textWidthNdc = measured.width / Constant::targetWidth;
+		float textHeightNdc = measured.height / Constant::targetWidth;
+		float availableWidth = std::min(0.96f, 0.48f - infopanelTextLeft);
+		if (textWidthNdc > availableWidth && textWidthNdc > 0.0f) {
+			textHeightNdc *= availableWidth / textWidthNdc;
+		}
+		return textHeightNdc + 2.0f * infopanelPaddingNdc;
+	}
+
+	// Breaks after the word that crosses maxLineLength, so one long line (e.g. a loading phrase)
+	// doesn't shrink the whole panel's font via SvgTxtTheme's overflow clamp.
+	std::string wordWrap(std::string const& text, std::size_t maxLineLength) {
+		std::istringstream iss(text);
+		std::string word, line, result;
+		bool firstLine = true;
+		while (iss >> word) {
+			if (!line.empty()) line += ' ';
+			line += word;
+			if (line.size() >= maxLineLength) {
+				if (!firstLine) result += '\n';
+				result += line;
+				firstLine = false;
+				line.clear();
+			}
+		}
+		if (!line.empty()) {
+			if (!firstLine) result += '\n';
+			result += line;
+		}
+		return result;
+	}
+}
 
 ScreenSongs::ScreenSongs(Game &game, std::string const& name, Audio& audio, Songs& songs, Database& database):
   Screen(game, name), m_audio(audio), m_songs(songs), m_database(database)
@@ -52,6 +134,7 @@ void ScreenSongs::reloadGL() {
 	m_bandCover = std::make_unique<Texture>(findFile("band_cover.svg"));
 	m_danceCover = std::make_unique<Texture>(findFile("dance_cover.svg"));
 	m_instrumentList = std::make_unique<Texture>(findFile("instruments.svg"));
+	m_infopanelBg = std::make_unique<Texture>(findFile("warning.svg"));
 }
 
 void ScreenSongs::exit() {
@@ -63,6 +146,7 @@ void ScreenSongs::exit() {
 	m_danceCover.reset();
 	m_bandCover.reset();
 	m_instrumentList.reset();
+	m_infopanelBg.reset();
 	theme.reset();
 	m_video.reset();
 	m_songbg.reset();
@@ -297,8 +381,9 @@ void ScreenSongs::draw() {
 	update();
 	drawMultimedia();
 
+	double const idle = m_idleTimer.get();
 	auto hiscore = std::string{};
-	std::string songText, orderText;
+	std::string songText, orderText, infoText;
 	// Test if there are no songs
 	if (m_songs.empty()) {
 		// Format the song information text
@@ -317,6 +402,7 @@ void ScreenSongs::draw() {
 		// Format the song information text
 		songText = fmt::format("{}: {}", song.artist, song.title);
 		hiscore = getHighScoreText();
+		if (idle > config["game/songinfo_delay"].ui()) infoText = getInfoPanelText(song);
 		// Escaped bytes of UTF-8 must be used here for compatibility with Windows (MSVC, mingw)
 		char const* VERT_ARROW = "\xe2\x86\x95";  // ↕
 		char const* HORIZ_ARROW = "\xe2\x86\x94";  // ↔
@@ -332,7 +418,7 @@ void ScreenSongs::draw() {
 		case 3: fmt::format_to(std::back_inserter(orderText), "{} {} {}", HORIZ_ARROW, _("type filter: "), m_songs.typeDesc()); break;
 		case 4: fmt::format_to(std::back_inserter(orderText), "{} {}   {} {}", HORIZ_ARROW, _("hiscores"), ENTER, _("jukebox mode")); break;
 		case 0:
-			bool empty = getGame().getCurrentPlayList().isEmpty(); 
+			bool empty = getGame().getCurrentPlayList().isEmpty();
 			orderText = fmt::format(fmt::runtime("{} {}"), ENTER, empty ? _("start a playlist with this song!") : _("open the playlist menu"));
 			break;
 		}
@@ -346,6 +432,7 @@ void ScreenSongs::draw() {
 		theme->order.draw(window, orderText);
 		drawInstruments(Dimensions(1.0f).fixedHeight(0.09f).right(0.45f).screenTop(0.02f));
 		theme->hiscores.draw(window, hiscore);
+		if (!infoText.empty()) drawInfoPanel(window, infoText);
 	}
 	// Menus on top of everything
 	if (m_menu.isOpen()) drawMenu();
@@ -396,6 +483,52 @@ std::string ScreenSongs::getHighScoreText() const {
 			break;
 		}
 	}
+
+	return ret;
+}
+
+// Box style/edges match the "Done Loading!" dialog (Dialog::draw(), warning.svg). Text isn't
+// SVG-anchored to the box (SvgTxtTheme centers it on dimensions.y1() vs. our top-anchored box), so
+// both are positioned from the same boxHeight each frame to stay in sync.
+void ScreenSongs::drawInfoPanel(Window& window, std::string const& infoText) {
+	float const boxHeight = infopanelHeight(theme->infopanel, infoText);
+	m_infopanelBg->dimensions.stretch(infopanelWidth, boxHeight).right(infopanelRight).screenTop(infopanelScreenTop);
+	m_infopanelBg->draw(window);
+	theme->infopanel.dimensions.left(infopanelTextLeft).screenTop(infopanelScreenTop + 0.5f * boxHeight);
+	theme->infopanel.draw(window, infoText);
+}
+
+std::string ScreenSongs::getInfoPanelText(Song const& song) const {
+	std::string ret;
+	auto const strLine = [&ret](std::string const& label, std::string const& value) {
+		if (!value.empty()) fmt::format_to(std::back_inserter(ret), "{}: {}\n", label, value);
+	};
+	auto const numLine = [&ret](std::string const& label, int value) {
+		if (value > 0) fmt::format_to(std::back_inserter(ret), "{}: {}\n", label, value);
+	};
+	auto const diffLine = [&ret](std::string const& label, int diff) {
+		if (diff != -1) fmt::format_to(std::back_inserter(ret), "{}: {}/6\n", label, diff);
+	};
+
+	strLine(_("Album"), song.album);
+	numLine(_("Track"), song.albumTrack);
+	numLine(_("Year"), song.year);
+	strLine(_("Edition"), song.edition);
+	strLine(_("Genre"), song.genre);
+	strLine(_("Charter"), song.creator);
+	if (!song.m_bpms.empty()) fmt::format_to(std::back_inserter(ret), "{}: {:.0f}\n", _("BPM"), 15.0 / song.m_bpms.front().step);
+	strLine(_("Source"), song.providedBy);
+	if (!song.icon.empty()) strLine(_("Charter set"), iconDisplayName(song.icon));
+
+	diffLine(_("Guitar"), song.diffGuitar);
+	diffLine(_("Bass"), song.diffBass);
+	diffLine(_("Drums"), song.diffDrums);
+	diffLine(_("Keys"), song.diffKeys);
+	diffLine(_("Vocals"), song.diffVocals);
+	diffLine(_("Rhythm guitar"), song.diffRhythm);
+
+	// Loading phrase last, unlabeled, blank-line separated, word-wrapped (can run long).
+	if (!song.loadingPhrase.empty()) fmt::format_to(std::back_inserter(ret), "\n{}\n", wordWrap(song.loadingPhrase, 40));
 
 	return ret;
 }
