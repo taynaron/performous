@@ -96,17 +96,15 @@ echo macosx_deployment_target 15.0 | sudo tee -a /opt/local/etc/macports/macport
 #### 2. Dependencies
 
 ```bash
-sudo port install boost cairo cmake cpprestsdk dylibbundler ffmpeg7 \
-   fftw-3-single libfmt11 fontconfig freetype glm help2man icu libepoxy \
+sudo port install boost cairo cmake cpprestsdk dylibbundler ffmpeg8 \
+   fftw-3-single libfmt12 fontconfig freetype glm help2man icu libepoxy \
    librsvg libsdl2 libxmlxx5 nlohmann-json opencv4 openssl pango \
    portaudio portmidi
 ```
 
-`ffmpeg7`, `libfmt11`, and `opencv4` are MacPorts' current major-version-suffixed ports for those
-libraries (MacPorts allows several ABI-incompatible major versions to coexist, so there's no
-version-less alias to install "whichever is newest"). If MacPorts has newer versions available, install whatever's current instead — CMake auto-detects whichever versioned port is installed (see `cmake/Modules/DarwinVersionedPortPrefixes.cmake`), so nothing else needs to change to match.
+`ffmpeg8`, `libfmt12`, and `opencv4` are MacPorts' current major-version-suffixed ports for those libraries (MacPorts allows several ABI-incompatible major versions to coexist, so there's no version-less alias to install "whichever is newest"). If MacPorts has newer versions available, install whatever's current instead — CMake auto-detects whichever versioned port is installed (see `cmake/Modules/DarwinVersionedPortPrefixes.cmake`), so nothing else needs to change to match.
 
-Some of these (e.g. `ffmpeg7`) have no prebuilt archive for every macOS version and get compiled from source by MacPorts, which can pull in further source builds transitively. If one of those fails with errors like `fatal error: 'memory' file not found`/`'cstdint' file not found` for standard C/C++ headers, your Command Line Tools installation has stale leftover headers (a known MacPorts/CLT interaction — MacPorts prints its own warning about this during `clean`). In this case, just reinstall the CommandLineTools:
+Some of these (e.g. `ffmpeg8`) have no prebuilt archive for every macOS version and get compiled from source by MacPorts, which can pull in further source builds transitively. If one of those fails with errors like `fatal error: 'memory' file not found`/`'cstdint' file not found` for standard C/C++ headers, your Command Line Tools installation has stale leftover headers (a known MacPorts/CLT interaction — MacPorts prints its own warning about this during `clean`). In this case, just reinstall the CommandLineTools:
 
 ```bash
 sudo rm -rf /Library/Developer/CommandLineTools
@@ -114,6 +112,8 @@ xcode-select --install
 ```
 
 Then re-run the `port install` command above.
+
+While you may choose to use prebuilt dependencies, Performous CI (and official app builds) compile all dependencies from source to ensure maximum stability and portability.
 
 If you plan to use the [CMake presets](#quick-dev-build-cmake-presets) below for a plain dev build, also install a generator, like ninja: `sudo port install ninja`. For running unit tests, install gtest: `sudo port install gtest`.
 
@@ -200,7 +200,7 @@ pip3 install -r ./macos-bundler-requirements.txt
 python3 ./macos-bundler.py --prefer-homebrew --debug
 ```
 
-One known Homebrew-specific issue this project works around: Homebrew's `fmt` package is often newer than this project's vendored `spdlog` expects, which used to cause `-Werror`/`-Wdeprecated-declarations` build failures. This is handled (`cmake/Modules/FindSpdlog.cmake` marks the vendored spdlog headers as system headers), so it shouldn't need any manual workaround. If you hit a similar deprecation error building against a very new Homebrew library, that's the class of issue to look for.
+One known Homebrew-specific issue this project works around: Homebrew's `fmt` package is often newer than even the latest version (as of august 2026) of `spdlog` expects, which used to cause `-Werror`/`-Wdeprecated-declarations` build failures. This is handled (`cmake/Modules/FindSpdlog.cmake` marks the spdlog headers as system headers), so it shouldn't need any manual workaround. If you hit a similar deprecation error building against a very new Homebrew library, look for something similar.
 
 #### Known issues
 
