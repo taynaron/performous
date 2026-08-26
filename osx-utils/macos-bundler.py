@@ -360,6 +360,7 @@ Options:
 	--enable-webserver <auto | on | off>  Defines whether to include webserver support [default: auto]
 	--build-tests <auto | on | off>  Defines whether to build unit tests [default: auto]
 	--script-debug  Print the resolved arguments and options passed to this utility.
+	--verify-bundle  Verify the outputs of the bundle before building the .dmg. Only needed before releasing an app, does not work with --debug.
 
 Environment:
 	--arch <architecture>  Target architecture name passed to the compiler. Defaults to the currently detected architecture as reported by uname. [default: {uname().machine}]
@@ -532,5 +533,8 @@ if __name__ == "__main__":
 		execute(f"make -C {performous_build_dir} -j {arguments['--jobs']} install VERBOSE=1")
 		if arguments["--debug"] != True:
 			bundle_libs()
-			verify_bundle()
+
+			if arguments["--verify-bundle"] == True:
+				verify_bundle()
+
 			create_dmg()
